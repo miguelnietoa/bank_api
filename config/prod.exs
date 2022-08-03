@@ -49,3 +49,15 @@ config :logger, level: :info
 #       force_ssl: [hsts: true]
 #
 # Check `Plug.SSL` for all available options in `force_ssl`.
+
+config :bank_api, BankAPI.EventStore,
+  column_data_type: "jsonb",
+  serializer: EventStore.JsonbSerializer,
+  adapter: Commanded.EventStore.Adapters.EventStore,
+  types: EventStore.PostgresTypes,
+  username: "postgres",
+  password: "postgres",
+  database: "bank_api_eventstore_prod",
+  hostname: "localhost",
+  pool_size: 10,
+  pool_overflow: 5
