@@ -10,7 +10,6 @@ config :bank_api, BankAPI.Repo,
   password: "postgres",
   database: "bank_api_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "localhost",
-  pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
 # We don't run a server during test. If one is required,
@@ -29,12 +28,12 @@ config :logger, level: :warn
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :bank_api, BankAPI.EventStore,
-  adapter: Commanded.EventStore.Adapters.InMemory,
-  serializer: EventStore.JsonSerializer,
-  types: EventStore.PostgresTypes,
-  username: "postgres",
-  password: "postgres",
-  database: "bank_api_eventstore_test",
-  hostname: "localhost",
-  pool_size: 10
+# Configuration for Commanded
+config :bank_api, BankAPI.CommandedApplication,
+  event_store: [
+    adapter: Commanded.EventStore.Adapters.InMemory,
+    event_store: BankAPI.EventStore,
+    serializer: Commanded.Serialization.JsonSerializer
+  ],
+  pubsub: :local,
+  registry: :local
