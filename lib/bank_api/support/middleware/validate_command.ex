@@ -5,7 +5,7 @@ defmodule BankAPI.Middleware.ValidateCommand do
 
   def before_dispatch(%Pipeline{command: command} = pipeline) do
     case command.__struct__.validate(command) do
-      :ok ->
+      {:ok, _command} ->
         pipeline
 
       {:error, messages} ->

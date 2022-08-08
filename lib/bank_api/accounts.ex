@@ -10,10 +10,6 @@ defmodule BankAPI.Accounts do
   alias BankAPI.Accounts.Commands.OpenAccount
   alias BankAPI.Accounts.Projections.Account
 
-  def uuid_regex do
-    ~r/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
-  end
-
   def get_account(uuid), do: Repo.get!(Account, uuid)
 
   def open_account(%{"initial_balance" => initial_balance}) do
