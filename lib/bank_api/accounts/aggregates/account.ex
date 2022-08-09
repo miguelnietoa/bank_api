@@ -4,47 +4,22 @@ defmodule BankAPI.Accounts.Aggregates.Account do
             closed?: false
 
   alias __MODULE__
-  alias BankAPI.Accounts.Commands.{OpenAccount, CloseAccount}
-  alias BankAPI.Accounts.Events.{AccountOpened, AccountClosed}
 
-  def execute(
-        %Account{uuid: account_uuid, closed?: true},
-        %CloseAccount{
-          account_uuid: account_uuid
-        }
-      ) do
-    {:error, :account_already_closed}
-  end
+  alias BankAPI.Accounts.Commands.{
+    OpenAccount,
+    CloseAccount,
+    DepositIntoAccount,
+    WithdrawFromAccount
+  }
 
-  def execute(
-        %Account{uuid: account_uuid, closed?: false},
-        %CloseAccount{
-          account_uuid: account_uuid
-        }
-      ) do
-    %AccountClosed{
-      account_uuid: account_uuid
-    }
-  end
+  alias BankAPI.Accounts.Events.{
+    AccountOpened,
+    AccountClosed,
+    DepositedIntoAccount,
+    WithdrawnFromAccount
+  }
 
-  def execute(
-        %Account{},
-        %CloseAccount{}
-      ) do
-    {:error, :not_found}
-  end
-
-  def apply(
-        %Account{uuid: account_uuid} = account,
-        %AccountClosed{
-          account_uuid: account_uuid
-        }
-      ) do
-    %Account{
-      account
-      | closed?: true
-    }
-  end
+  ## OpenAccount
 
   def execute(
         %Account{uuid: nil},
@@ -74,7 +49,94 @@ defmodule BankAPI.Accounts.Aggregates.Account do
     {:error, :account_already_opened}
   end
 
-  # state mutators
+  ## CloseAccount
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: true},
+        %CloseAccount{
+          account_uuid: account_uuid
+        }
+      ) do
+    {:error, :account_already_closed}
+  end
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: false},
+        %CloseAccount{
+          account_uuid: account_uuid
+        }
+      ) do
+    %AccountClosed{
+      account_uuid: account_uuid
+    }
+  end
+
+  def execute(
+        %Account{},
+        %CloseAccount{}
+      ) do
+    {:error, :not_found}
+  end
+
+  ## DepositIntoAccount
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: false, current_balance: current_balance},
+        %DepositIntoAccount{account_uuid: account_uuid, deposit_amount: amount}
+      ) do
+    %DepositedIntoAccount{
+      account_uuid: account_uuid,
+      new_current_balance: current_balance + amount
+    }
+  end
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: true},
+        %DepositIntoAccount{account_uuid: account_uuid}
+      ) do
+    {:error, :account_closed}
+  end
+
+  def execute(
+        %Account{},
+        %DepositIntoAccount{}
+      ) do
+    {:error, :not_found}
+  end
+
+  ## WithdrawFromAccount
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: false, current_balance: current_balance},
+        %WithdrawFromAccount{account_uuid: account_uuid, withdraw_amount: amount}
+      ) do
+    if current_balance - amount > 0 do
+      %WithdrawnFromAccount{
+        account_uuid: account_uuid,
+        new_current_balance: current_balance - amount
+      }
+    else
+      {:error, :insufficient_funds}
+    end
+  end
+
+  def execute(
+        %Account{uuid: account_uuid, closed?: true},
+        %WithdrawFromAccount{account_uuid: account_uuid}
+      ) do
+    {:error, :account_closed}
+  end
+
+  def execute(
+        %Account{},
+        %WithdrawFromAccount{}
+      ) do
+    {:error, :not_found}
+  end
+
+  # State mutators
+
+  ## AccountOpened
 
   def apply(
         %Account{} = account,
@@ -87,6 +149,54 @@ defmodule BankAPI.Accounts.Aggregates.Account do
       account
       | uuid: account_uuid,
         current_balance: initial_balance
+    }
+  end
+
+  ## AccountClosed
+
+  def apply(
+        %Account{uuid: account_uuid} = account,
+        %AccountClosed{
+          account_uuid: account_uuid
+        }
+      ) do
+    %Account{
+      account
+      | closed?: true
+    }
+  end
+
+  # Deposited Into Account
+  def apply(
+        %Account{
+          uuid: account_uuid,
+          current_balance: _current_balance
+        } = account,
+        %DepositedIntoAccount{
+          account_uuid: account_uuid,
+          new_current_balance: new_current_balance
+        }
+      ) do
+    %Account{
+      account
+      | current_balance: new_current_balance
+    }
+  end
+
+  # Withdrawn From Account
+  def apply(
+        %Account{
+          uuid: account_uuid,
+          current_balance: _current_balance
+        } = account,
+        %WithdrawnFromAccount{
+          account_uuid: account_uuid,
+          new_current_balance: new_current_balance
+        }
+      ) do
+    %Account{
+      account
+      | current_balance: new_current_balance
     }
   end
 end

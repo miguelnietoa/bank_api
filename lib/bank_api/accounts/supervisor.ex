@@ -8,7 +8,8 @@ defmodule BankAPI.Accounts.Supervisor do
   def init(_arg) do
     children = [
       Supervisor.child_spec(BankAPI.Accounts.Projectors.AccountOpened, id: :account_opened),
-      Supervisor.child_spec(BankAPI.Accounts.Projectors.AccountClosed, id: :account_closed)
+      Supervisor.child_spec(BankAPI.Accounts.Projectors.AccountClosed, id: :account_closed),
+      Supervisor.child_spec(BankAPI.Accounts.Projectors.DepositsAndWithdrawals, id: :deposits_and_withdrawals),
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
