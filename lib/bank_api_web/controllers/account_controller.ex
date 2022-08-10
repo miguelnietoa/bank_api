@@ -29,7 +29,7 @@ defmodule BankAPIWeb.AccountController do
     end
   end
 
-  def deposit(conn, %{"id" => account_id, "deposit" => amount}) do
+  def deposit(conn, %{"id" => account_id, "deposit_amount" => amount}) do
     with {:ok, %Account{} = account} <- Accounts.deposit(account_id, amount) do
       conn
       |> put_status(:ok)
