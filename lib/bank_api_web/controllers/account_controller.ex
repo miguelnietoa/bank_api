@@ -29,7 +29,7 @@ defmodule BankAPIWeb.AccountController do
     end
   end
 
-  def deposit(conn, %{"id" => account_id, "deposit_amount" => amount}) do
+  def deposit(conn, %{"id" => account_id, "deposit" => amount}) do
     with {:ok, %Account{} = account} <- Accounts.deposit(account_id, amount) do
       conn
       |> put_status(:ok)
@@ -42,6 +42,20 @@ defmodule BankAPIWeb.AccountController do
       conn
       |> put_status(:ok)
       |> render("show.json", account: account)
+    end
+  end
+
+  def transfer(
+        conn,
+        %{
+          "id" => account_id,
+          "transfer_amount" => amount,
+          "destination_account" => destination_account_id
+        }
+      ) do
+    with :ok <- Accounts.transfer(account_id, amount, destination_account_id) do
+      conn
+      |> send_resp(201, "")
     end
   end
 end
